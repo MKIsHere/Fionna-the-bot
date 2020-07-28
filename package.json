@@ -1,0 +1,22 @@
+{
+  "name": "Fionna-the-bot",
+  "version": "2020.7.28.17",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index"
+  },
+  "keywords": [],
+  "author": "MKIsHereOficial",
+  "license": "ISC",
+  "dependencies": {
+    "canvacord": "^3.0.9",
+    "chalk": "^4.1.0",
+    "discord.js": "^12.2.0",
+    "express": "^4.17.1",
+    "quick.db": "^7.1.1",
+    "quick.eco": "^3.1.1",
+    "random": "^2.2.0",
+    "twemoji-parser": "^13.0.0"
+  }
+}
