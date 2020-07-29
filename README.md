@@ -2,7 +2,8 @@
 
 Fionna é um bot simples feito em base de [`discord.js`](https://discord.js.org/), têm muita coisa pra mudar ainda mas espero que juntos consigamos melhorá-la.
 
-exemplo de código: ```js
+exemplo de código: 
+```js
 let user = message.author;
 let money = client.currency.fetchMoney(user.id).balance;
 
