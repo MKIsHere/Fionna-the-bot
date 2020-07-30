@@ -1,6 +1,7 @@
 const { MessageEmbed } = require('discord.js');
 
 module.exports.run = async (client, message, args) => {
+	let prefix = client.db.fetch(`${message.guild.id}.prefix`) || client.config.prefix;
 	var user = message.author;
 	var member = message.member;
 
@@ -11,7 +12,6 @@ module.exports.run = async (client, message, args) => {
 		{name: "Azul Bebê", id: "736304433838817370"},
 		{name: "Azul", id: "736304563774029967"},
 		{name: "Ciano", id: "736304499383074907"},
-		{name: "Cyan", id: "736304499383074907"},
 		{name: "Verde Claro", id: "736304134155927574"},
 		{name: "Verde Escuro", id: "736304200769863847"},
 		{name: "Branco", id: "736304755105857536"},
@@ -20,7 +20,8 @@ module.exports.run = async (client, message, args) => {
 		{name: "Rosa", id:"736303808346587168"},
 		{name: "Magenta", id: "736303807948128298"},
 		{name: "Laranja", id: "736304278796239010"},
-		{name: "Roxo", id: "736423733442510889"}
+		{name: "Roxo", id: "736423733442510889"},
+		{name: "Dourado", id: "738119119227977760"}
 	];
 
 	var names = colors.map(function(item) {
@@ -32,8 +33,24 @@ module.exports.run = async (client, message, args) => {
 
 	var role = message.guild.roles.cache.find(r => r.name.toLowerCase() === string.toLowerCase());
 
+	var colorsList = new MessageEmbed()
+	.setTitle("*UwU Corezinhas UwU*");
+	colors.forEach(item => {
+		item.role = message.guild.roles.cache.find(ro => ro.id === item["id"]);
+		colorsList.setColor(client.colors[0].hex);
+		colorsList.addField(`${item["name"]}`, `HEX: ${item.role.hexColor}\n${item.role.toString()}`, true);
+		colorsList.setDescription(`Para ganhar uma cor, diga \`${prefix}color <nomeDaCor>\``);
+	});
+
+	let colorInfo = {
+		channel: message.guild.channels.cache.find(cha => cha.id === "736314185935355915"),
+		bah: "Bah..."
+	}
+
 	if (!args[0]) {
-		return await message.channel.send("Opa, você têm que escolher uma das cores... Se precisar de ajuda, vá no canal " + client.channelsObj.search("cores")).then(msg => msg.channel.send(new MessageEmbed().setTitle("Cores").setDescription(names)));
+		return await message.channel.send("Opa, você têm que escolher uma das cores...");
+	} else if (args[0].toLowerCase() === "list") {
+		return await message.channel.send(colorsList).then(msg => message.delete());
 	} else if (args[0].toLowerCase() === "remove") {
 		await member.roles.remove(ids);
 		await client.logs.addLog(`Todas as cores de ${user} foram removidas `, user, client.channelsObj.search("logs"));
@@ -41,7 +58,7 @@ module.exports.run = async (client, message, args) => {
 	} else {
 		try {
 			if (!names.includes(string.toLowerCase()) || !role) {
-				return await message.channel.send(`${user.toString()} eh... Esse cargo não existe ou não é uma cor. Pesquisei por "${string}". Veja se está correto.`).then(msg => msg.channel.send(new MessageEmbed().setTitle("Cores").setDescription(names).setColor('RANDOM')));
+				return await message.channel.send(`${user.toString()} eh... Esse cargo não existe ou não é uma cor. Pesquisei por "${string}". Veja se está correto.`).then(msg => msg.channel.send(`Ah, é no canal ${colorInfo.channel.toString()}`));
 				} 
 			await member.roles.remove(ids);
 			await member.roles.add(role);

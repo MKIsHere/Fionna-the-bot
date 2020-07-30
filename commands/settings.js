@@ -1,7 +1,9 @@
 const { MessageEmbed } = require('discord.js');
 
 module.exports.run = async (client, message, args) => {
+	let prefix = client.db.fetch(`${message.guild.id}.prefix`) || client.config.prefix;
 	let isAdmin = message.member.hasPermission("ADMINISTRATOR");
+	let isInline = true;
 	let language = client.db.fetch(`${message.guild.id}.language`) || 0;
 	let langs = [
 		["Português (Brasil)", "Brazilian Portuguese"],
@@ -11,6 +13,38 @@ module.exports.run = async (client, message, args) => {
 	let actualLanguage = langs[language][language];
 
 	if (args[0]) {
+		if (args[0].toLowerCase() === "prefix") {
+			if (!isAdmin) {
+				if (language === 0) {
+					return message.channel.send(`Você não têm acesso à essa configuração.`);
+				} else {
+					return message.channel.send(`You do not have access to this setting.`);;
+				}
+			} // ADMIN CHECK
+
+			let newPrefix = args[1];
+			if (!args[1]) {
+				return await message.channel.send(`${message.author.toString()}, meu prefixo atual é "**${prefix}**"!`);
+			}
+
+			if (newPrefix === "*") {
+				return message.channel.send(`Cancelado.`).then(msg => client.setTimeout(() => {msg.delete()}, 1000));
+			}
+
+			let brackets = [
+				`${client.dep.chalk.keyword("orange")("[")}`,
+				`${client.dep.chalk.keyword("orange")("]")}`
+			]
+
+			try {
+				await message.channel.send(`Meu prefixo mudou de "**${prefix}**" para "**${newPrefix}**"`);
+				await client.db.set(`${message.guild.id}.prefix`, newPrefix);
+				return await console.log(`${brackets[0]}${client.dep.chalk.green(message.guild.name)} (${client.dep.chalk.gray(message.guild.id)})${brackets[1]} Mudou de prefixo para "${newPrefix}"`);
+			} catch (err) {
+				return await console.error(err);
+			}
+
+		}
 		if (args[0].toLowerCase() === "lang" || args[0].toLowerCase() === "language") {
 			if (!isAdmin) {
 				if (language === 0) {
@@ -74,13 +108,15 @@ module.exports.run = async (client, message, args) => {
 		.setTitle(`Configurações - ${message.guild.name}`)
 		.addField(`Língua`, `${actualLanguage}`)
 		.addField(`Versão`, `${client.config.version}`)
+		.addField(`Prefixo`, `${prefix}`)
 		.setColor(client.colors[0].hex)
 		.setTimestamp();
 	} else {
 		embed = new MessageEmbed()
 		.setTitle(`Settings - ${message.guild.name}`)
-		.addField(`Language`, `${actualLanguage}`)
-		.addField(`Version`, `${client.config.version}`)
+		.addField(`Language`, `${actualLanguage}`, isInline)
+		.addField(`Version`, `${client.config.version}`, isInline)
+		.addField(`Prefix`, `${prefix}`, isInline)
 		.setColor(client.colors[0].hex)
 		.setTimestamp();
 	}
@@ -96,5 +132,6 @@ module.exports.help = {
 	"category": [
 		"Configurações",
 		"Settings"
-	]
+	],
+	"admin": true
 }

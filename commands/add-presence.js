@@ -7,5 +7,6 @@ module.exports.run = async (client, message, args) => {
 }
 
 module.exports.help = {
-	"name": "presence"
+	"name": "presence",
+	"admin": true
 }

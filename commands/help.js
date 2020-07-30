@@ -1,150 +1,62 @@
-const { MessageEmbed } = require('discord.js');
+/**
+ * O Comando Help envia uma mensagem de ajuda.
+ * Contendo as informações dos comandos.
+ */
 
 module.exports.run = async (client, message, args) => {
-	let language = await client.db.fetch(`language_${message.guild.id}`) || 0;
-	let useEmbed = true;
-	let commands = [];
-	var commandIndex = 0;
-	let embed = new MessageEmbed()
-		.setDescription(`Comandos Disponíveis:`)
-		.setTimestamp();
+	let language = await client.db.fetch(`${message.guild.id}.language`) || 0;
+	let prefix = await client.db.fetch(`${message.guild.id}.prefix`) || client.config.prefix;
+    /** Objeto embed que irá ser enviado. */
+    const embed = {
+      color: client.colors[0].hex,
+      title: 'Minha lista de comandos',
+      description: `[Clique aqui para ir até o repositório onde estou :heart:](https://github.com/MKIsHere/Fionna-the-bot)\nAh, meu prefixo é ${prefix}`,
+      timestamp: new Date(),
+      footer: {
+        text: '2020 ® Liga dos Programadores, GokuroHype'
+      },
+      fields: []
+    }
 
+    let commands = client.commands;
 
-	if (commands) {
-		client.commands.each(cmd => {
-			if (!cmd.help.commandIndexOn) {
-				commandIndex += 1;
-				cmd.help.commandIndexOn = true;
-			}
-			var altNames, category, usage, command;
-			if (!cmd.help.helpOn) {
-				if (useEmbed) {
-				if (cmd.help.altNames) {
-				if (cmd.help.altNames[0]) {
-					altNames = cmd.help.altNames[0];
-					if (cmd.help.altNames[1]) {
-						altNames = cmd.help.altNames[0] + ", " + cmd.help.altNames[1];
-					}
+    if (message.member === null || !message.member.hasPermission('ADMINISTRATOR')) commands = commands.filter(c => !c.help.admin);
+
+    commands.forEach(command => {
+      if (command.alias) return
+      if (command.help.name != "help" && !command.help.isInHelp) {
+				if (command.help.descripton) {
+					if (command.help.category && command.help.category[language]) {
+						embed.fields.push({
+        name: `${command.help.name}`,
+        value: `**Descrição**: ${command.help.description[language]}
+        **Categoria**: ${command.help.category[language]}\n`,
+				inline: true
+      });
+			command.help.isInHelp = true;
+					}} else {
+				if (command.help.category && command.help.category[language]) {
+					embed.fields.push({
+        name: `${command.help.name}`,
+        value: `**Categoria**: ${command.help.category[language]}\n`,
+				inline: true
+      	});
+				command.help.isInHelp = true;
 				}
 			}
-
-			if (cmd.help.category) {
-				if (cmd.help.category[language]) {
-					category = cmd.help.category[language];
-				}
-			}
-			if (cmd.help.usage) {
-				if (cmd.help.usage[language]) {
-					usage = cmd.help.category[language];
-				}
-			} 
-
-			if (altNames) {
-				if (usage) {
-					if (category) {
-						command = `[${category}] ${cmd.help.name} (${altNames}): ${usage} \n`;
-					} else {
-						command = `${cmd.help.name} (${altNames}): ${usage} \n`;
-					}
-				} else {
-					if (category) {
-						command = `[${category}] ${cmd.help.name} (${altNames}) \n`;
-					} else {
-						command = ` ${cmd.help.name} (${altNames}) \n`;
-					}
-				}
 			} else {
-				if (usage) {
-					if (category) {
-						command = `[${category}] ${cmd.help.name}: ${usage} \n`;
-					} else {
-						command = `${cmd.help.name}: ${usage} \n`;
-					}
-				} else {
-					if (category) {
-						command = `[${category}] ${cmd.help.name} \n`;
-					} else {
-						command = `${cmd.help.name} \n`;
-					}
-				}
+				command.help.isInHelp = false;
 			}
+    });
 
-			} else {
-				if (cmd.help.altNames) {
-				if (cmd.help.altNames[0]) {
-					altNames = cmd.help.altNames[0];
-					if (cmd.help.altNames[1]) {
-						altNames = cmd.help.altNames[0] + ", " + cmd.help.altNames[1];
-					}
-				}
-			}
-
-			if (cmd.help.category) {
-				if (cmd.help.category[language]) {
-					category = cmd.help.category[language];
-				}
-			}
-			if (cmd.help.usage) {
-				if (cmd.help.usage[language]) {
-					usage = cmd.help.category[language];
-				}
-			} 
-
-			if (altNames) {
-				if (usage) {
-					if (category) {
-						command = `[${category}] ${commandIndex}.		${cmd.help.name} (${altNames}): ${usage} \n`;
-					} else {
-						command = `${commandIndex}.		${cmd.help.name} (${altNames}): ${usage} \n`;
-					}
-				} else {
-					if (category) {
-						command = `[${category}] ${commandIndex}.		${cmd.help.name} (${altNames}) \n`;
-					} else {
-						command = `${commandIndex}.		${cmd.help.name} (${altNames}) \n`;
-					}
-				}
-			} else {
-				if (usage) {
-					if (category) {
-						command = `[${category}] ${commandIndex}.		${cmd.help.name}: ${usage} \n`;
-					} else {
-						command = `${commandIndex}.		${cmd.help.name}: ${usage} \n`;
-					}
-				} else {
-					if (category) {
-						command = `[${category}] ${commandIndex}.		${cmd.help.name} \n`;
-					} else {
-						command = `${commandIndex}.		${cmd.help.name} \n`;
-					}
-				}
-			}}
-			}
-			if (useEmbed) {
-				if (!cmd.help.helpOn) {
-					embed.addField(`${commandIndex}.`, command, true);
-					
-					cmd.help.helpOn = true;
-				} else {
-					cmd.help.helpOn = false;
-				}
-			} else {
-				if (!cmd.help.helpOn) {
-					commands.push(command);
-					embed = new MessageEmbed()
-						.setDescription(`Comandos Disponíveis: ***${commands}***.`)
-						.setTimestamp();
-						
-					cmd.help.helpOn = true;
-			} else {
-				cmd.help.helpOn = false;
-			}}
-
-		})};
-
-	return message.channel.send(embed);
-}
+    message.author.send({
+      embed: embed
+    }).then(() => message.react('⚡')).catch(() => message.reply('eu não tenho permissões para enviar DM para você 😥'))
+};
 
 module.exports.help = {
-	"name": "help"
-}
+    name: 'help',
+    category: ['Ajuda', 'Help'],
+    description: 'Mostra todos os comandos disponíveis da Fionna.',
+    usage: 'help'
+};

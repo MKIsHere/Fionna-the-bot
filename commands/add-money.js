@@ -31,5 +31,6 @@ module.exports.help = {
 	"category": [
 		"Economia",
 		"Economy"
-	]
+	],
+	"admin": true
 }

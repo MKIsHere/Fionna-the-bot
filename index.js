@@ -87,7 +87,8 @@ client.presences.array = [
 		"Hum.... prevejo um show lésbico essa semana..",
 		"SOU LÉSBICA E COM ORGULHO, BELEZA?",
 		"Olha... a Mamãe disse que eu deveria fazer amigos.. quer ser meu amigo?",
-		"Loritta-Senpai... será que um dia me notará?"
+		"Loritta-Senpai... será que um dia me notará?",
+		`Estou na versão ${client.config.version}`
 ];
 client.presences.array.forEach(pr => {
 	client.presences.length += 1;
@@ -124,9 +125,51 @@ client.dep = {
 
 let language =  0;
 
+
+
+let rainbowCount = 0;
 client.on("message", async (message) => {
+	let nonCmdChannels = client.db.fetch(`${message.guild.id}.disabledChannels`) || [
+		{name: 'sugestões', id: '738113559875027075'}
+	];
+	let nonCmdChannels_ids = nonCmdChannels.map(channel => {
+		return channel["id"];
+	});
   if (!message.guild) return;
 	let prefix = client.db.fetch(`${message.guild.id}.prefix`) || client.config.prefix;
+	if (message.content.includes("rainbow") || message.content.includes("arco-íris")) {
+		rainbowCount += 1;
+		let rainbow = new Discord.MessageEmbed()
+		.setColor('RANDOM')
+		.setImage("https://media.discordapp.net/attachments/736293662585126922/737703082674225172/dance3.gif")
+		.setDescription("Viva!!!");
+
+		if (rainbowCount >= 5) {
+			return message.channel.send("EU NÃO VOU DAR ARCO-ÍRIS BUCETA :angry:");
+			rainbowCount = 0;
+		}
+
+		return message.channel.send("Arco-íris nem são tão legais...");
+		/*return message.channel.send(rainbow).then(embed => client.setInterval(() => {
+			if (embed.embeds[0]) {
+				rainbow.setColor('RANDOM');
+				embed.edit(rainbow);
+			}
+		}, 1)); */
+	}
+	if (message.content.includes("welcome")) {
+		let avatarURL = message.author.displayAvatarURL({format: 'png', dynamic: true, size: 1024}) || "https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcT9CnKrYhQHjpfcq35UNpspGqs3rTzmhuyeOQ&usqp=CAU";
+		let img = await client.canvas.welcome({username: message.author.username, discrim: message.author.discriminator, avatarURL: avatarURL, color: "purple"});
+	
+		return await message.channel.send(new Discord.MessageAttachment(img, "welcome.png"));
+	}
+	if (message.content.includes("pixel")) {
+		let avatarURL = message.author.displayAvatarURL({format: 'png', dynamic: true, size: 1024}) || "https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcT9CnKrYhQHjpfcq35UNpspGqs3rTzmhuyeOQ&usqp=CAU";
+		let img = await client.canvas.pixelate(avatarURL, 10);
+
+		return await message.channel.send(new Discord.MessageAttachment(img, "pixelate.gif"));
+	}
+
 	if (message.content.includes("Eu sou a Mestra da Horda!")) {
 		message.member.roles.add(message.guild.roles.cache.get("737709073105158175"));
 	} else if (message.content.includes("Pela honra de Grayskull") && message.author.id === "617843971049390100" || message.content.toLowerCase === "pela honra de grayskull" && message.author.id === "617843971049390100" || message.content.toLowerCase === "pela honra de grayskull!" && message.author.id === "617843971049390100") {
@@ -183,7 +226,8 @@ client.on("message", async (message) => {
 	language = client.db.fetch(`${message.guild.id}.language`) || 0;
   // Handle XP
   if (!message.author.bot) {
-		xp(message);
+		if (!nonCmdChannels_ids.includes(message.channel.id)) {
+			xp(message);
   // command handler
   if (!message.content.startsWith(prefix)) return;
   let args = message.content.slice(prefix.length).trim().split(" ");
@@ -191,6 +235,10 @@ client.on("message", async (message) => {
   let commandFile = client.commands.get(command);
   if (!commandFile) return;
   commandFile.run(client, message, args);
+		} else {
+			if (!message.content.startsWith(prefix)) return;
+			message.reply("Sinto muito, me impediram de usar comandos nesse canal.").then(msg => client.setTimeout(() => {msg.delete()}, 2000));
+		}
 	}
 });
 
@@ -212,25 +260,43 @@ client.logs = {"addLog": null, "channel": null, "logEnabled": true, "brackets": 
 	`${client.dep.chalk.keyword("orange")("[")}`,
 	`${client.dep.chalk.keyword("orange")("]")}`
 ]};
-
-function makeLog (content, author, logChannel) {
-	client.db.set(`logColorDefined_${logChannel.guild.id}`, false);
-	if (!client.db.get(`logColorDefined_${logChannel.guild.id}`)) {
-		client.db.set(`logColor_${logChannel.guild.id}`, "F51AA4");
-		client.db.set(`logColorDefined_${logChannel.guild.id}`, true);
-		console.log(`Cor do Log de ${logChannel.guild.name} (${logChannel.guild.id}) foi definido para ${client.db.get(`logColor_${logChannel.guild.id}`)}`);
+let makeLog = async (content, author, logChannel) => {
+	if (!isNaN(client.db.fetch(`${logChannel.guild.id}.logs.color`))) {
+		client.db.set(`${logChannel.guild.id}.logs.color`, client.colors[0].hex);
+	}
+	if (!client.db.fetch(`${logChannel.guild.id}.logs.colorDefined`)) {
+		client.db.set(`${logChannel.guild.id}.logs.color`, client.colors[0].hex);
+		client.db.set(`${logChannel.guild.id}.logs.colorDefined`, true);
+		console.log(`Cor do Log de ${logChannel.guild.name} (${logChannel.guild.id}) foi definido para ${client.db.fetch(`${logChannel.guild.id}.logs.color`)}`);
 	}
 	let embed = new Discord.MessageEmbed()
-	.setAuthor(author.username, author.displayAvatarURL({ format: "png", dynamic: true }))
-	.setColor(client.db.get(`logColor_${logChannel.guild.id}`))
+	.setAuthor(`${author.username}#${author.discriminator}`, author.displayAvatarURL({ format: "png", dynamic: true, size: 1024 }))
+	.setColor(client.db.fetch(`${logChannel.guild.id}.logs.color`))
 	.setDescription(content)
 	.setTimestamp();
 
 
 	if (logChannel != false || logChannel != null) {
-		logChannel.send(embed);
+		try {
+			
+		const webhooks = await logChannel.fetchWebhooks();
+		const webhook = webhooks.first();
+		if (!webhook) {
+			logChannel.createWebhook(`LOGS - ${logChannel.guild.name}`, {
+				avatar: 'https://i.imgur.com/wSTFkRM.png'
+			}).then(web => console.log('[WEBHOOKS]' + `Webhook ${web.name} acaba de ser criado no ${logChannel.name} (${logChannel.guild.name})`));
+		}
+		
+		webhook.send(' ', {
+			username: `LOGS - ${logChannel.guild.name}`,
+			avatarURL: 'https://i.imgur.com/wSTFkRM.png',
+			embeds: [embed],
+		});
+		} catch (err) {
+			console.error(client.dep.chalk.red("[LOGS]") + `Error: ${err}`);
+		}
 	} else {
-		console.log(embed);
+		console.log(client.dep.chalk.keyword("Yellow")(`[LOGS: ${author}]`) + content);
 	}
 }
 
@@ -239,7 +305,7 @@ client.logs.addLog = makeLog;
 function consoleLog(logContent, message) {
 	let channel = message.guild.channels.cache.get('735902007440965673');
 
-	channel.send(actualCotn)
+	channel.send(actualContent);
 }
 
 client.channelsObj = {
@@ -247,9 +313,10 @@ client.channelsObj = {
 		return message.channel.send(message.author.toString() + ", " + content);
 	},
 	"search": function(value) {
-		if (value === "logs") {
+		let actualValue = value.toLowerCase();
+		if (actualValue === "logs") {
 			return client.channels.cache.get('735622491225063486'); 
-			} else if (value === "colors" || value === "cores") {
+			} else if (actualValue === "colors" || value === "cores") {
 				return client.channels.cache.get('736314185935355915');		
 			} else {
 			return console.error("Erro: Impossível encontrar o canal");
@@ -306,6 +373,40 @@ console.log(client.dep.chalk.keyword("yellow")("[LANGUAGE]") + ` ${languageLoadi
 setTimeout(() => {
 	console.log(client.dep.chalk.keyword("yellow")("[LANGUAGE]") + ` ${languageLoadedText}`);
 }, 4900);
+
+client.on("messageDelete", async(message) => {
+	let canLog = client.db.fetch(`${message.guild.id}.logs.enabled`) || true;
+	const logChannel = client.channelsObj.search("logs");
+	let embed = new Discord.MessageEmbed()
+	.setTimestamp()
+	.setAuthor(`${message.author.username}#${message.author.discriminator}`, message.author.displayAvatarURL({ format: 'png', dynamic: true, size: 1024}))
+	.setTitle(`Mensagem deletada em #${message.channel.name}`)
+	.setDescription(`${message.content}`)
+	.setColor(client.colors[0].hex);
+
+	if (canLog) {
+		if (!message.author.bot) {
+		try {
+		const webhooks = await logChannel.fetchWebhooks();
+		const webhook = webhooks.first();
+		if (!webhook) {
+			logChannel.createWebhook(`LOGS - ${logChannel.guild.name}`, {
+				avatar: 'https://i.imgur.com/wSTFkRM.png'
+			}).then(web => console.log('[WEBHOOKS]' + `Webhook ${web.name} acaba de ser criado no ${logChannel.name} (${logChannel.guild.name})`));
+		}
+		
+		webhook.send(' ', {
+			username: `LOGS - ${logChannel.guild.name}`,
+			avatarURL: 'https://i.imgur.com/wSTFkRM.png',
+			embeds: [embed],
+		}).catch(console.error);
+		} catch (err) {
+			console.error(client.dep.chalk.red("[LOGS]") + `Error: ${err}`);
+		}}
+	} else {
+		console.log(client.dep.chalk.keyword("yellow")(`[LOGS: MENSAGEM DELETADA EM ${message.channel.name} (${message.guild.name}) DE "${message.author.username}#${message.author.discriminator}"] `) + `${message.content}`);
+	}
+});
 
 
 client.login(client.config.TOKEN);
