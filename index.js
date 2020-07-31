@@ -82,7 +82,6 @@ client.presences = {
 }
 client.presences.array = [
 		"Sou lésbica de carteirinha, isso aí, Dattebayo!",
-		"Uuuuui, a Senhorita Milena parece ser bem totosa ein..... Meu sentido lésbico tá pirando aqui",
 		"A Mamãe disse que eu sou uma ótima Lésbica, quem aí também acha isso?",
 		"Hum.... prevejo um show lésbico essa semana..",
 		"SOU LÉSBICA E COM ORGULHO, BELEZA?",
@@ -244,7 +243,8 @@ client.on("message", async (message) => {
 
 var canXpChannels = [
 	"735615778484650026",
-	"735177278585307253"
+	"735177278585307253",
+	"737711084919718018"
 ]
 var doubleXpChannels = [
 	"735615751528120411"
@@ -325,14 +325,17 @@ client.channelsObj = {
 }
 
 function xp(message) {
+	if (!canXpChannels.includes(message.channel.id) && !doubleXpChannels.includes(message.channel.id) && client.db.fetch(`${message.guild.id}.channels.${message.channel.id}.canXp`)) {
+		canXpChannels.push(message.channel.id)
+	}
   canXpChannels.forEach(nxpc => {
 		if (message.channel.id === nxpc) {
 			if (!client.cooldown.has(`${message.author.id}`) || !(Date.now() - client.cooldown.get(`${message.author.id}`) > client.config.cooldown)) {
-    let xp = client.db.add(`xp_${message.author.id}`, perMessageXp);
+    let xp = client.db.add(`${message.author.id}.status._xp`, perMessageXp);
     let level = Math.floor(0.3 * Math.sqrt(xp));
-    let lvl = client.db.get(`level_${message.author.id}`) || client.db.set(`level_${message.author.id}`, 1);;
+    let lvl = client.db.get(`${message.author.id}.status.level`) || client.db.set(`${message.author.id}.status.level`, 1);;
     if (level > lvl) {
-      let newLevel = client.db.set(`level_${message.author.id}`, level);
+      let newLevel = client.db.set(`${message.author.id}.status.level`, level);
       if (language === 0) {
 				message.channel.send(`:tada: ${message.author.toString()}, você passou pro nível ${newLevel}!`);
 			} else {
@@ -347,11 +350,11 @@ function xp(message) {
 	doubleXpChannels.forEach(dxpc => {
 		if (message.channel.id === dxpc) {
 			if (!client.cooldown.has(`${message.author.id}`) || !(Date.now() - client.cooldown.get(`${message.author.id}`) > client.config.cooldown)) {
-    let xp = client.db.add(`xp_${message.author.id}`, perMessageXp * 2);
+    let xp = client.db.add(`${message.author.id}.status._xp`, perMessageXp * 2);
     let level = Math.floor(0.3 * Math.sqrt(xp));
-    let lvl = client.db.get(`level_${message.author.id}`) || client.db.set(`level_${message.author.id}`, 1);;
+    let lvl = client.db.get(`${message.author.id}.status.level`) || client.db.set(`${message.author.id}.status.level`, 1);;
     if (level > lvl) {
-      let newLevel = client.db.set(`level_${message.author.id}`, level);
+      let newLevel = client.db.set(`${message.author.id}.status.level`, level);
       message.channel.send(`:tada: ${message.author.toString()}, você passou pro nível ${newLevel}!`);
 		client.logs.addLog(`Passou pro nível ${newLevel}! Parabéns!`, message.author, message.guild.channels.cache.get('735622491225063486'));
     }

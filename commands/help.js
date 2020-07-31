@@ -5,53 +5,40 @@
 
 module.exports.run = async (client, message, args) => {
 	let language = await client.db.fetch(`${message.guild.id}.language`) || 0;
-	let prefix = await client.db.fetch(`${message.guild.id}.prefix`) || client.config.prefix;
-    /** Objeto embed que irá ser enviado. */
-    const embed = {
-      color: client.colors[0].hex,
-      title: 'Minha lista de comandos',
-      description: `[Clique aqui para ir até o repositório onde estou :heart:](https://github.com/MKIsHere/Fionna-the-bot)\nAh, meu prefixo é ${prefix}`,
-      timestamp: new Date(),
-      footer: {
-        text: '2020 ® Liga dos Programadores, GokuroHype'
-      },
-      fields: []
-    }
+	let point = [
+		".",
+		"..",
+		"...",
+		".",
+		"..",
+		"...",
+		".",
+		"..",
+		"...",
+		".",
+		"..",
+		"...",
+		".",
+		"..",
+		"...",
+		".",
+		"..",
+		"..."
+	]
+	let rand = client.Random.int(0, 2);
 
-    let commands = client.commands;
 
-    if (message.member === null || !message.member.hasPermission('ADMINISTRATOR')) commands = commands.filter(c => !c.help.admin);
-
-    commands.forEach(command => {
-      if (command.alias) return
-      if (command.help.name != "help" && !command.help.isInHelp) {
-				if (command.help.descripton) {
-					if (command.help.category && command.help.category[language]) {
-						embed.fields.push({
-        name: `${command.help.name}`,
-        value: `**Descrição**: ${command.help.description[language]}
-        **Categoria**: ${command.help.category[language]}\n`,
-				inline: true
-      });
-			command.help.isInHelp = true;
-					}} else {
-				if (command.help.category && command.help.category[language]) {
-					embed.fields.push({
-        name: `${command.help.name}`,
-        value: `**Categoria**: ${command.help.category[language]}\n`,
-				inline: true
-      	});
-				command.help.isInHelp = true;
-				}
-			}
-			} else {
-				command.help.isInHelp = false;
-			}
-    });
-
-    message.author.send({
-      embed: embed
-    }).then(() => message.react('⚡')).catch(() => message.reply('eu não tenho permissões para enviar DM para você 😥'))
+	let reactEmoji = "❗";
+	let seconds = 0;
+	return message.channel.send(`Loading...`).then(msg => client.setTimeout(() => {msg.edit(`Carregando...`).then(ms => ms.react(reactEmoji).then(m => client.setInterval(() => {
+		
+		if (seconds >= 61) return;
+		if (seconds >= 60) return msg.edit(`Comi o cu de quem tá lendo. lmao`);
+		rand = client.Random.int(0, 2);
+		msg.edit(`Loading${point[rand]}`);
+		seconds += 1;
+		console.log(seconds + " segundos");
+	}, 1000)))}, 3000))
 };
 
 module.exports.help = {

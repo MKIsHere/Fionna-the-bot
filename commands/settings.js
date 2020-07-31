@@ -1,4 +1,4 @@
-const { MessageEmbed } = require('discord.js');
+const { MessageEmbed, MessageAttachment } = require('discord.js');
 
 module.exports.run = async (client, message, args) => {
 	let prefix = client.db.fetch(`${message.guild.id}.prefix`) || client.config.prefix;
@@ -12,7 +12,33 @@ module.exports.run = async (client, message, args) => {
 
 	let actualLanguage = langs[language][language];
 
+	const discloud = require("discloud-status");
+	if (!client.ram) {
+		client.ram = {
+			"uso": discloud.usoRam(),
+			"total": discloud.totalRam(),
+			"ram": discloud.ram()
+		}
+
+		
+	console.log(`Uso de RAM: ${client.ram.uso}/${client.ram.total}`)
+	}
+	client.setInterval(() => {
+		client.ram = {
+			"uso": client.Random.int(50, 512) + "MB",
+			"total": discloud.totalRam(),
+			"ram": discloud.ram()
+		}
+	}, 1000);
+
 	if (args[0]) {
+		if (args[0].toLowerCase() === "avatar") {
+			let value = args[1];
+			if (!value) return message.channel.send(new MessageAttachment(client.user.displayAvatarURL({format: 'png', size: 1024, dynamic: true})));
+			if (!value.startsWith("https://")) return;
+			await client.user.setAvatar(value);
+			return message.channel.send(`Agora meu avatar é esse aí`).then(msg => msg.reply(new MessageAttachment(value)));
+		}
 		if (args[0].toLowerCase() === "prefix") {
 			if (!isAdmin) {
 				if (language === 0) {
@@ -70,11 +96,27 @@ module.exports.run = async (client, message, args) => {
 		} else {
 			
 			if (args[1] === "pt-br" || args[1] === "br" || args[1] === "portuguese" || args[1] === "brazilian portuguese") {
-				client.db.set(`${message.guild.id}.language`, 0);
+				if (language != 0) {
+					client.db.set(`${message.guild.id}.language`, 0);
 				return message.channel.send(`Agora a língua é ${langs[0][0]}`);
+				} else {
+					if (language === 0) {
+						return message.channel.send("Esta já é a linguagem do Servidor.");
+					} else {
+						return message.channel.send("This is already the language of the Server.");
+					}
+				}
 			} else if (args[1] === "en" || args[1] === "english" ) {
+				if (language != 1) {
 				client.db.set(`${message.guild.id}.language`, 1);
 				return message.channel.send(`Now the language is ${langs[1][1]}`);
+				} else {
+					if (language === 0) {
+						return message.channel.send("Esta já é a linguagem do Servidor.");
+					} else {
+						return message.channel.send("This is already the language of the Server.");
+					}
+				}
 			} else {
 				if (language === 0) {
 					return message.channel.send(`Erro... essa linguagem não existe em minha base de dados!`);
@@ -96,30 +138,60 @@ module.exports.run = async (client, message, args) => {
 		}
 	}
 
+	let serverIcon = `${message.guild.iconURL()}`;
+
+	let aou = await client.canvas.color(client.colors[0].hex);
+	let aouFile = "aou.png";
+	client.canvas.write(aou, aouFile);
+
 	let embed = new MessageEmbed()
 	.setTitle(`Configurações - ${message.guild.name}`)
 	.addField(`Língua`, `${langs[language]}`)
-	.addField(`Versão`, `${client.config.version}`)
+	.addField(`Versão do BOT`, `${client.config.version}`)
+	.setThumbnail(serverIcon)
 	.setColor(client.colors[0].hex)
 	.setTimestamp();
+
+	console.log(client.dep.chalk.keyword("cyan")(`${serverIcon}`));
+
+
+	let invisibleEmoji = client.emojis.cache.find(emoji => emoji.name === "invisible");
+
+	let invisibleField = embed.addField(invisibleEmoji, invisibleEmoji);
 
 	if (language === 0) {
 		embed = new MessageEmbed()
 		.setTitle(`Configurações - ${message.guild.name}`)
-		.addField(`Língua`, `${actualLanguage}`)
-		.addField(`Versão`, `${client.config.version}`)
-		.addField(`Prefixo`, `${prefix}`)
+		.addField(`Língua`, `${actualLanguage}`, isInline)
+		.addField(`Versão do BOT`, `${client.config.version}`, isInline)
+		.addField(`Prefixo`, `${prefix}`, isInline)
+		.setThumbnail(serverIcon)
 		.setColor(client.colors[0].hex)
 		.setTimestamp();
 	} else {
 		embed = new MessageEmbed()
 		.setTitle(`Settings - ${message.guild.name}`)
 		.addField(`Language`, `${actualLanguage}`, isInline)
-		.addField(`Version`, `${client.config.version}`, isInline)
+		.addField(`BOT Version`, `${client.config.version}`, isInline)
 		.addField(`Prefix`, `${prefix}`, isInline)
+		.setThumbnail(serverIcon)
 		.setColor(client.colors[0].hex)
 		.setTimestamp();
 	}
+
+	if (!client.author) client.author = [
+		{name: 'MKIsHereOficial', id: '703378763601412138', discriminator: '3326'},
+		{name: 'MissOompaLoompa', id: '735175624242757683', discriminator: '7465'}
+	];
+	let authorIDs = client.author.map(author => {
+		return author["id"];
+	});
+
+	if (authorIDs.includes(message.author.id)) {
+		embed.addField(`BOT Avatar`, `[URL](${client.user.displayAvatarURL({format: 'png', dynamic: true, size: 1024})})`, true);
+	}
+
+	 // embed.setThumbnail(`https://media.discordapp.net/attachments/736293662585126922/737703082674225172/dance3.gif`);
 
 	return message.channel.send(embed);
 }
